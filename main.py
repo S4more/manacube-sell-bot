@@ -10,8 +10,9 @@ from matching import Matcher
 from Item import Item
 from Commands import Commands
 from Cords import Cords
+from vision import Vision
 
-
+from mob import blaze
 
 class Keyboard:
     '''
@@ -37,7 +38,7 @@ class Keyboard:
         if self.stop_key != self.resume_key:
             keyboard.on_press_key(self.stop_key, self._deactivate)
             keyboard.on_press_key(self.resume_key, self._activate)
-        
+
         else:
             keyboard.on_press_key(self.stop_key, self._switch)
 
@@ -93,11 +94,12 @@ class MinecraftBot:
         HUNTING = auto(),
 
 
-    def __init__(self, keyboard: Keyboard, mouse: Mouse, matcher: Matcher):
+    def __init__(self, keyboard: Keyboard, mouse: Mouse, matcher: Matcher, eyes: Vision):
         self.state = self.State.HITTING
         self.keyboard = keyboard
         self.mouse = mouse
         self.matcher = matcher
+        self.eyes = eyes
 
         self.blaze_stacks = 0
 
@@ -110,7 +112,7 @@ class MinecraftBot:
     def state_machine(self):
         if self.state == self.State.HITTING:
             self.handle_hitting()
-        
+
         elif self.state == self.State.HUNTING:
             self.handle_hunting()
 
@@ -126,11 +128,9 @@ class MinecraftBot:
                     print("No mobs... Nothing to sell... Trying again later.")
                     exit("1337")
 
-
-        
         print(f"Old: {self.state} -> new: {target}")
         self.state = target
-        
+
     def check_for_item(self, item: Item) -> int:
         '''
         Returns the quantity of a given item
@@ -146,7 +146,8 @@ class MinecraftBot:
             self.change_state(self.state.HUNTING)
 
     def handle_hunting(self):
-        self.mob_cords = {"x": 800, "y": 800} # get_mobCord(Mob.Blaze)
+        self.mob_cords = self.eyes.get_mob_position(lower_bound, upper_bound, sct)
+        print(self.mob_cords)
         if self.mob_cords == None:
             self.change_state(self.State.WAITING)
         else:
@@ -162,10 +163,9 @@ class MinecraftBot:
         time.sleep(0.5)
 
         cord = self.matcher.detect_item(Item.ANVIL)[0]
-        self.mouse.click(cord.x, cord.y) 
+        self.mouse.click(cord.x, cord.y)
         time.sleep(0.5)
 
-        
         cord = self.matcher.detect_item(Item.BLAZEROD)[0]
         self.mouse.click(cord.x, cord.y, "right")
         time.sleep(0.5)
@@ -179,7 +179,7 @@ class MinecraftBot:
         for i in range(4):
             self.mouse.click(cord.x, cord.y)
             time.sleep(0.1)
-        
+
         self.keyboard.send_key("esc")
 
     def loop(self):
@@ -193,7 +193,8 @@ async def main():
     k = Keyboard()
     m = Mouse()
     matcher = Matcher()
-    bot = MinecraftBot(k, m, matcher)
+    vision = Vision()
+    bot = MinecraftBot(k, m, matcher, vision)
 
     #listener_routine = asyncio.ensure_future(m.start_keyboard_listener())
 

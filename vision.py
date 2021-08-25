@@ -12,7 +12,6 @@ from mss import mss
 class Vision:
     def __init__(self):
         self.monitor = {"top": 0, "left": 0, "width": 1920, "height": 1080}
-        #self.monitor = {"top": 40, "left": 0, "width": 800, "height": 640}
 
     def get_mob_position(self, lower_bound, upper_bound, sct):
         frame = self._get_frame(sct)
